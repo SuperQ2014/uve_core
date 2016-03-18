@@ -1,0 +1,63 @@
+user  linhua;
+worker_processes  2;
+
+env UVE_ENV_IS_DEV=1;
+env UVE_ENV_DATACENTER=dc1;
+#env UVE_ULTIMATE_DEGRADE=1000;
+
+#include uve.env;
+
+error_log  logs/error.log  info;
+
+pid        logs/nginx.pid;
+
+worker_rlimit_nofile 65535;
+
+events {
+    use epoll;
+    worker_connections  65535;
+}
+
+
+http {
+     
+    include       mime.types;
+    default_type  application/octet-stream;
+    server_tokens off;
+    
+    server_names_hash_bucket_size 128;
+    client_header_buffer_size 4k;
+    large_client_header_buffers 4 32k;
+    client_max_body_size 100m;
+    
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" $request_body '
+    '^$status^ $body_bytes_sent "$http_referer" '
+    '"$http_user_agent" "$http_x_forwarded_for" ^"$request_time"^ "^$upstream_response_time^"';
+    log_format sub_request '[$time_local] $uri [$upstream_addr] $status $request_time [$upstream_response_time] [$upstream_status]';
+    log_format sub_request_args '[$time_local] $uri [$upstream_addr] $status $request_time [$upstream_response_time] [$upstream_status] $args';
+    
+    sendfile       on;
+    tcp_nopush     on;
+    tcp_nodelay    on;
+    keepalive_timeout  30;
+    
+    gzip  on;
+    gzip_min_length  1k;
+    gzip_buffers     4 16k;
+    gzip_http_version 1.0;
+    gzip_comp_level 9;
+    gzip_types       text/plain application/x-javascript text/css application/xml;
+    gzip_vary on;
+    
+    fastcgi_connect_timeout 60;
+    fastcgi_send_timeout 60;
+    fastcgi_read_timeout 60;
+    fastcgi_buffer_size 128k;
+    fastcgi_buffers 8 128k;
+    fastcgi_busy_buffers_size 256k;
+    fastcgi_temp_file_write_size 256k;
+
+    lua_package_path "?.lua;/usr/local/lib/lua/resty/?.lua;/usr/home/linhua/projects/uveio/uve_core/core/?.lua;/usr/home/linhua/projects/uveio/uve_core/config/lua/?.lua;;";
+    include /usr/home/linhua/projects/uveio/uve_core/config/nginx/nginx_uve_server.conf;
+}
+

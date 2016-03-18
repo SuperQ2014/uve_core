@@ -1,0 +1,9 @@
+module(..., package.seeall)
+
+STATUS_NOT_INIT = 0
+STATUS_OK = 1
+STATUS_FAILED = 3
+STATUS_LIMITED = 7
+
+LEVEL_BO_V7 = 1
+
